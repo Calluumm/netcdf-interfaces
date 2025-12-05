@@ -39,6 +39,7 @@
  module netcdf
   use typesizes, only: OneByteInt, TwoByteInt, FourByteInt, EightByteInt, &
                        FourByteReal, EightByteReal
+  use, intrinsic :: iso_c_binding, only: c_int, c_int8_t, c_int16_t, c_int32_t, c_int64_t, c_float, c_double, c_loc, c_ptr
   implicit none
   private
   ! as of version 4.4, the following are merged:
@@ -354,6 +355,26 @@ integer, parameter, private :: NETCDF4_BIT = 12
        nf_inq_var_szip, nf_def_var_szip, nf_free_vlens, nf_free_string, &
        nf_set_var_chunk_cache, nf_get_var_chunk_cache, nf_rename_grp, &
        nf_def_var_filter, nf_inq_var_filter
+  interface
+    function c_nc_inq_var_fill(ncid, varid, no_fill, fill) bind(C, name="nc_inq_var_fill")
+      use, intrinsic :: iso_c_binding, only: c_int, c_ptr
+      integer(c_int), value :: ncid
+      integer(c_int), value :: varid
+      integer(c_int), intent(inout) :: no_fill
+      type(c_ptr), value :: fill
+      integer(c_int) :: c_nc_inq_var_fill
+    end function c_nc_inq_var_fill
+  end interface
+  interface
+    function c_nc_def_var_fill(ncid, varid, no_fill, fill) bind(C, name="nc_def_var_fill")
+      use, intrinsic :: iso_c_binding, only: c_int, c_ptr
+      integer(c_int), value :: ncid
+      integer(c_int), value :: varid
+      integer(c_int), intent(in) :: no_fill
+      type(c_ptr), value :: fill
+      integer(c_int) :: c_nc_def_var_fill
+    end function c_nc_def_var_fill
+  end interface
   ! Overloaded variable functions
   interface nf90_def_var
     module procedure nf90_def_var_Scalar, nf90_def_var_oneDim, nf90_def_var_ManyDims
@@ -5401,7 +5422,12 @@ end function nf90_get_var_EightByteInt
     integer, intent(in) :: no_fill
     integer(kind=selected_int_kind(2)), intent(in) :: fill
     integer :: nf90_def_var_fill_OneByteInt
-    nf90_def_var_fill_OneByteInt = nf_def_var_fill(ncid, varid, no_fill, fill)
+    integer(c_int8_t), target :: tmp_fill_c
+    integer(c_int) :: tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_fill_c = int(fill, kind=c_int8_t)
+    nf90_def_var_fill_OneByteInt = c_nc_def_var_fill(tmp_ncid, tmp_varid, int(no_fill, kind=c_int), c_loc(tmp_fill_c))
   end function nf90_def_var_fill_OneByteInt
   ! -----------
   function nf90_def_var_fill_TwoByteInt(ncid, varid, no_fill, fill)
@@ -5410,7 +5436,12 @@ end function nf90_get_var_EightByteInt
     integer, intent(in) :: no_fill
     integer(kind=selected_int_kind(4)), intent(in) :: fill
     integer :: nf90_def_var_fill_TwoByteInt
-    nf90_def_var_fill_TwoByteInt = nf_def_var_fill(ncid, varid, no_fill, fill)
+    integer(c_int16_t), target :: tmp_fill_c
+    integer(c_int) :: tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_fill_c = int(fill, kind=c_int16_t)
+    nf90_def_var_fill_TwoByteInt = c_nc_def_var_fill(tmp_ncid, tmp_varid, int(no_fill, kind=c_int), c_loc(tmp_fill_c))
   end function nf90_def_var_fill_TwoByteInt
   ! -----------
   function nf90_def_var_fill_FourByteInt(ncid, varid, no_fill, fill)
@@ -5419,7 +5450,12 @@ end function nf90_get_var_EightByteInt
     integer, intent(in) :: no_fill
     integer(kind=selected_int_kind(9)), intent(in) :: fill
     integer :: nf90_def_var_fill_FourByteInt
-    nf90_def_var_fill_FourByteInt = nf_def_var_fill(ncid, varid, no_fill, fill)
+    integer(c_int32_t), target :: tmp_fill_c
+    integer(c_int) :: tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_fill_c = int(fill, kind=c_int32_t)
+    nf90_def_var_fill_FourByteInt = c_nc_def_var_fill(tmp_ncid, tmp_varid, int(no_fill, kind=c_int), c_loc(tmp_fill_c))
   end function nf90_def_var_fill_FourByteInt
   ! -----------
   function nf90_def_var_fill_EightByteInt(ncid, varid, no_fill, fill)
@@ -5428,7 +5464,12 @@ end function nf90_get_var_EightByteInt
     integer, intent(in) :: no_fill
     integer(kind=selected_int_kind(18)), intent(in) :: fill
     integer :: nf90_def_var_fill_EightByteInt
-    nf90_def_var_fill_EightByteInt = nf_def_var_fill(ncid, varid, no_fill, fill)
+    integer(c_int64_t), target :: tmp_fill_c
+    integer(c_int) :: tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_fill_c = int(fill, kind=c_int64_t)
+    nf90_def_var_fill_EightByteInt = c_nc_def_var_fill(tmp_ncid, tmp_varid, int(no_fill, kind=c_int), c_loc(tmp_fill_c))
   end function nf90_def_var_fill_EightByteInt
   ! -----------
   function nf90_def_var_fill_FourByteReal(ncid, varid, no_fill, fill)
@@ -5437,7 +5478,12 @@ end function nf90_get_var_EightByteInt
     integer, intent(in) :: no_fill
     real(kind=selected_real_kind(P =  6, R =  37)), intent(in) :: fill
     integer :: nf90_def_var_fill_FourByteReal
-    nf90_def_var_fill_FourByteReal = nf_def_var_fill(ncid, varid, no_fill, fill)
+    real(c_float), target :: tmp_fill_c
+    integer(c_int) :: tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_fill_c = real(fill, kind=c_float)
+    nf90_def_var_fill_FourByteReal = c_nc_def_var_fill(tmp_ncid, tmp_varid, int(no_fill, kind=c_int), c_loc(tmp_fill_c))
   end function nf90_def_var_fill_FourByteReal
   ! -----------
   function nf90_def_var_fill_EightByteReal(ncid, varid, no_fill, fill)
@@ -5446,7 +5492,12 @@ end function nf90_get_var_EightByteInt
     integer, intent(in) :: no_fill
     real(kind=selected_real_kind(P =  13, R =  307)), intent(in) :: fill
     integer :: nf90_def_var_fill_EightByteReal
-    nf90_def_var_fill_EightByteReal = nf_def_var_fill(ncid, varid, no_fill, fill)
+    real(c_double), target :: tmp_fill_c
+    integer(c_int) :: tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_fill_c = real(fill, kind=c_double)
+    nf90_def_var_fill_EightByteReal = c_nc_def_var_fill(tmp_ncid, tmp_varid, int(no_fill, kind=c_int), c_loc(tmp_fill_c))
   end function nf90_def_var_fill_EightByteReal
   ! -----------
   function nf90_inq_var_fill_OneByteInt(ncid, varid, no_fill, fill)
@@ -5455,7 +5506,15 @@ end function nf90_get_var_EightByteInt
     integer, intent(inout) :: no_fill
     integer(kind=selected_int_kind(2)), intent(inout) :: fill
     integer :: nf90_inq_var_fill_OneByteInt
-    nf90_inq_var_fill_OneByteInt = nf_inq_var_fill(ncid, varid, no_fill, fill)
+    integer(c_int8_t), target :: tmp_fill_c
+    integer(c_int) :: tmp_no_fill, tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_no_fill = int(no_fill, kind=c_int)
+    tmp_fill_c = int(fill, kind=c_int8_t)
+    nf90_inq_var_fill_OneByteInt = c_nc_inq_var_fill(tmp_ncid, tmp_varid, tmp_no_fill, c_loc(tmp_fill_c))
+    no_fill = int(tmp_no_fill, kind=kind(no_fill))
+    fill = int(tmp_fill_c, kind=kind(fill))
   end function nf90_inq_var_fill_OneByteInt
   ! -----------
   function nf90_inq_var_fill_TwoByteInt(ncid, varid, no_fill, fill)
@@ -5464,7 +5523,15 @@ end function nf90_get_var_EightByteInt
     integer, intent(inout) :: no_fill
     integer(kind=selected_int_kind(4)), intent(inout) :: fill
     integer :: nf90_inq_var_fill_TwoByteInt
-    nf90_inq_var_fill_TwoByteInt = nf_inq_var_fill(ncid, varid, no_fill, fill)
+    integer(c_int16_t), target :: tmp_fill_c
+    integer(c_int) :: tmp_no_fill, tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_no_fill = int(no_fill, kind=c_int)
+    tmp_fill_c = int(fill, kind=c_int16_t)
+    nf90_inq_var_fill_TwoByteInt = c_nc_inq_var_fill(tmp_ncid, tmp_varid, tmp_no_fill, c_loc(tmp_fill_c))
+    no_fill = int(tmp_no_fill, kind=kind(no_fill))
+    fill = int(tmp_fill_c, kind=kind(fill))
   end function nf90_inq_var_fill_TwoByteInt
   ! -----------
   function nf90_inq_var_fill_FourByteInt(ncid, varid, no_fill, fill)
@@ -5473,7 +5540,15 @@ end function nf90_get_var_EightByteInt
     integer, intent(inout) :: no_fill
     integer(kind=selected_int_kind(9)), intent(inout) :: fill
     integer :: nf90_inq_var_fill_FourByteInt
-    nf90_inq_var_fill_FourByteInt = nf_inq_var_fill(ncid, varid, no_fill, fill)
+    integer(c_int32_t), target :: tmp_fill_c
+    integer(c_int) :: tmp_no_fill, tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_no_fill = int(no_fill, kind=c_int)
+    tmp_fill_c = int(fill, kind=c_int32_t)
+    nf90_inq_var_fill_FourByteInt = c_nc_inq_var_fill(tmp_ncid, tmp_varid, tmp_no_fill, c_loc(tmp_fill_c))
+    no_fill = int(tmp_no_fill, kind=kind(no_fill))
+    fill = int(tmp_fill_c, kind=kind(fill))
   end function nf90_inq_var_fill_FourByteInt
   ! -----------
   function nf90_inq_var_fill_EightByteInt(ncid, varid, no_fill, fill)
@@ -5482,7 +5557,15 @@ end function nf90_get_var_EightByteInt
     integer, intent(inout) :: no_fill
     integer(kind=selected_int_kind(18)), intent(inout) :: fill
     integer :: nf90_inq_var_fill_EightByteInt
-    nf90_inq_var_fill_EightByteInt = nf_inq_var_fill(ncid, varid, no_fill, fill)
+    integer(c_int64_t), target :: tmp_fill_c
+    integer(c_int) :: tmp_no_fill, tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_no_fill = int(no_fill, kind=c_int)
+    tmp_fill_c = int(fill, kind=c_int64_t)
+    nf90_inq_var_fill_EightByteInt = c_nc_inq_var_fill(tmp_ncid, tmp_varid, tmp_no_fill, c_loc(tmp_fill_c))
+    no_fill = int(tmp_no_fill, kind=kind(no_fill))
+    fill = int(tmp_fill_c, kind=kind(fill))
   end function nf90_inq_var_fill_EightByteInt
   ! -----------
   function nf90_inq_var_fill_FourByteReal(ncid, varid, no_fill, fill)
@@ -5491,7 +5574,15 @@ end function nf90_get_var_EightByteInt
     integer, intent(inout) :: no_fill
     real(kind=selected_real_kind(P =  6, R =  37)), intent(inout) :: fill
     integer :: nf90_inq_var_fill_FourByteReal
-    nf90_inq_var_fill_FourByteReal = nf_inq_var_fill(ncid, varid, no_fill, fill)
+    real(c_float), target :: tmp_fill_c
+    integer(c_int) :: tmp_no_fill, tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_no_fill = int(no_fill, kind=c_int)
+    tmp_fill_c = real(fill, kind=c_float)
+    nf90_inq_var_fill_FourByteReal = c_nc_inq_var_fill(tmp_ncid, tmp_varid, tmp_no_fill, c_loc(tmp_fill_c))
+    no_fill = int(tmp_no_fill, kind=kind(no_fill))
+    fill = real(tmp_fill_c, kind=kind(fill))
   end function nf90_inq_var_fill_FourByteReal
   ! -----------
   function nf90_inq_var_fill_EightByteReal(ncid, varid, no_fill, fill)
@@ -5500,7 +5591,15 @@ end function nf90_get_var_EightByteInt
     integer, intent(inout) :: no_fill
     real(kind=selected_real_kind(P =  13, R =  307)), intent(inout) :: fill
     integer :: nf90_inq_var_fill_EightByteReal
-    nf90_inq_var_fill_EightByteReal = nf_inq_var_fill(ncid, varid, no_fill, fill)
+    real(c_double), target :: tmp_fill_c
+    integer(c_int) :: tmp_no_fill, tmp_ncid, tmp_varid
+    tmp_ncid = int(ncid, kind=c_int)
+    tmp_varid = int(varid, kind=c_int)
+    tmp_no_fill = int(no_fill, kind=c_int)
+    tmp_fill_c = real(fill, kind=c_double)
+    nf90_inq_var_fill_EightByteReal = c_nc_inq_var_fill(tmp_ncid, tmp_varid, tmp_no_fill, c_loc(tmp_fill_c))
+    no_fill = int(tmp_no_fill, kind=kind(no_fill))
+    fill = real(tmp_fill_c, kind=kind(fill))
   end function nf90_inq_var_fill_EightByteReal
   ! -----------
   function nf90_put_att_any(ncid, varid, name, typeid, length, values)
